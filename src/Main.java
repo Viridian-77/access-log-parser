@@ -18,17 +18,17 @@ public class Main {
                 System.out.printf("Путь указан верно. Это файл номер %d%n", count);
             }
             try {
-                getFileLinesInfo(path);
+                getUserAgentStats(path);
             } catch (IOException | InappropriateLineLengthException ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    public static void getFileLinesInfo(String path) throws IOException {
+    public static void getUserAgentStats(String path) throws IOException {
         int countLine = 0;
-        int minLineLength = Integer.MAX_VALUE;
-        int maxLineLength = 0;
+        int countGooglebot = 0;
+        int countYandexBot = 0;
         try (FileReader fileReader = new FileReader(path);
              BufferedReader reader =
                      new BufferedReader(fileReader);) {
@@ -39,16 +39,33 @@ public class Main {
                     throw new InappropriateLineLengthException("Строка не должна быть длинее 1024 символов");
                 }
                 countLine++;
-                if (length < minLineLength) {
-                    minLineLength = length;
-                }
-                if (length > maxLineLength) {
-                    maxLineLength = length;
+                String searchBot = getSearchBot(line);
+                switch (searchBot.toLowerCase()) {
+                    case "googlebot":
+                        countGooglebot++;
+                        break;
+                    case "yandexbot":
+                        countYandexBot++;
+                        break;
                 }
             }
         }
         System.out.println("Общее количество строк в файле: " + countLine);
-        System.out.println("Длина самой длинной строки в файле: " + maxLineLength);
-        System.out.println("Длина самой короткой строки в файле: " + minLineLength);
+        printSearchBotStats(countLine,countGooglebot, countYandexBot);
+    }
+
+    private static String getSearchBot(String line) {
+        AccessLogLine parsedLine = new AccessLogLine(line);
+        parsedLine.initialize();
+        UserAgent userAgent = new UserAgent(parsedLine.userAgent);
+        return userAgent.getSearchBot();
+    }
+
+    private static void printSearchBotStats(int countLine, int countGooglebot, int countYandexBot) {
+        double onePercent = (countLine / 100.0);
+        double  googlePercent = countGooglebot / onePercent;
+        double  yandexPercent = countYandexBot / onePercent;
+        System.out.printf("Запросов от YandexBot: %d, что составляет %f процентов относительно общего числа сделанных запросов.\n", countYandexBot, yandexPercent);
+        System.out.printf("Запросов от Googlebot: %d, что составляет %f процентов относительно общего числа сделанных запросов.\n", countGooglebot, googlePercent);
     }
 }
