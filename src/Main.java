@@ -19,9 +19,67 @@ public class Main {
             }
             try {
                 getUserAgentStats(path);
+                getBrowserAndOsStats(path);
+                getTrafficRate(path);
             } catch (IOException | InappropriateLineLengthException ex) {
                 ex.printStackTrace();
             }
+        }
+    }
+
+    public static void getTrafficRate(String path) throws IOException {
+        Statistics statistics = new Statistics();
+        try (FileReader fileReader = new FileReader(path);
+             BufferedReader reader =
+                     new BufferedReader(fileReader);) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                statistics.addEntry(new LogEntry(line));
+            }
+        }
+        System.out.println(statistics.getTrafficRate());
+    }
+
+    public static void getBrowserAndOsStats(String path) throws IOException {
+        int edgeCount = 0, firefoxCount = 0, chromeCount = 0, operaCount = 0, otherCount = 0;
+        int windowsCount = 0, macOSCount = 0, linuxCount = 0;
+        try (FileReader fileReader = new FileReader(path);
+             BufferedReader reader =
+                     new BufferedReader(fileReader);) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                LogEntry logEntry = new LogEntry(line);
+                switch (logEntry.getAgent().getBrowser().toLowerCase()) {
+                    case "edge":
+                        edgeCount++;
+                        break;
+                    case "firefox":
+                        firefoxCount++;
+                        break;
+                    case "chrome":
+                        chromeCount++;
+                        break;
+                    case "opera":
+                        operaCount++;
+                        break;
+                    default:
+                        otherCount++;
+                        break;
+                }
+                switch (logEntry.getAgent().getOperatingSystem().toLowerCase()) {
+                    case "windows":
+                        windowsCount++;
+                        break;
+                    case "macintosh":
+                        macOSCount++;
+                        break;
+                    case "linux":
+                        linuxCount++;
+                        break;
+                }
+            }
+            System.out.printf("Edge: %d, Firefox: %d, Chrome: %d, Opera: %d, Other: %d\n", edgeCount, firefoxCount, chromeCount, operaCount, otherCount);
+            System.out.printf("Windows: %d, macOS: %d, Linux: %d\n", windowsCount, macOSCount, linuxCount);
         }
     }
 
@@ -51,20 +109,18 @@ public class Main {
             }
         }
         System.out.println("Общее количество строк в файле: " + countLine);
-        printSearchBotStats(countLine,countGooglebot, countYandexBot);
+        printSearchBotStats(countLine, countGooglebot, countYandexBot);
     }
 
     private static String getSearchBot(String line) {
-        AccessLogLine parsedLine = new AccessLogLine(line);
-        parsedLine.initialize();
-        UserAgent userAgent = new UserAgent(parsedLine.userAgent);
-        return userAgent.getSearchBot();
+        LogEntry parsedLine = new LogEntry(line);
+        return parsedLine.getAgent().getSearchBot();
     }
 
     private static void printSearchBotStats(int countLine, int countGooglebot, int countYandexBot) {
         double onePercent = (countLine / 100.0);
-        double  googlePercent = countGooglebot / onePercent;
-        double  yandexPercent = countYandexBot / onePercent;
+        double googlePercent = countGooglebot / onePercent;
+        double yandexPercent = countYandexBot / onePercent;
         System.out.printf("Запросов от YandexBot: %d, что составляет %f процентов относительно общего числа сделанных запросов.\n", countYandexBot, yandexPercent);
         System.out.printf("Запросов от Googlebot: %d, что составляет %f процентов относительно общего числа сделанных запросов.\n", countGooglebot, googlePercent);
     }
