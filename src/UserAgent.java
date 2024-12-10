@@ -58,11 +58,13 @@ public class UserAgent {
     }
 
     private String initOperatingSystem() {
-        String tmpOperatingSystem = "";
+        String tmpOperatingSystem;
         Pattern pattern = Pattern.compile(OPERATING_SYSTEM_REGEX);
         Matcher matcher = pattern.matcher(userAgentString);
         if (matcher.find()) {
             tmpOperatingSystem = matcher.group(0);
+        } else {
+            tmpOperatingSystem = "Other";
         }
         return tmpOperatingSystem;
     }

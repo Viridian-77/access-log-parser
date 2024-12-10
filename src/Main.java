@@ -20,14 +20,14 @@ public class Main {
             try {
                 getUserAgentStats(path);
                 getBrowserAndOsStats(path);
-                getTrafficRate(path);
+                getVariousStats(path);
             } catch (IOException | InappropriateLineLengthException ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    public static void getTrafficRate(String path) throws IOException {
+    public static void getVariousStats(String path) throws IOException {
         Statistics statistics = new Statistics();
         try (FileReader fileReader = new FileReader(path);
              BufferedReader reader =
@@ -37,7 +37,8 @@ public class Main {
                 statistics.addEntry(new LogEntry(line));
             }
         }
-        System.out.println(statistics.getTrafficRate());
+        System.out.println("Траффика в час: " + statistics.getTrafficRate() + " байт");
+        System.out.println("Доли ОС: " + statistics.getOsStats());
     }
 
     public static void getBrowserAndOsStats(String path) throws IOException {
