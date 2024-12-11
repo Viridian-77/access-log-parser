@@ -39,6 +39,9 @@ public class Main {
         }
         System.out.println("Траффика в час: " + statistics.getTrafficRate() + " байт");
         System.out.println("Доли ОС: " + statistics.getOsStats());
+        System.out.println("Доли браузеров: " + statistics.getBrowserStats());
+        System.out.println("==========================================");
+        System.out.println("Несуществующие страницы :" + statistics.getNonexistentSitePages());
     }
 
     public static void getBrowserAndOsStats(String path) throws IOException {
