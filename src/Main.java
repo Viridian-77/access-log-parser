@@ -43,6 +43,9 @@ public class Main {
         System.out.println("Среднее количество посещений сайта за час: " + statistics.getAverageVisitsPerHour());
         System.out.println("Среднее количество ошибочных запросов в час: " + statistics.getAverageErrorsPerHour());
         System.out.println("Средняя посещаемость одним пользователем: " + statistics.getAverageVisitsPerUser());
+        System.out.println("Пиковая посещаемость (в секунду): " + statistics.getPeakVisitsPerSecond());
+        System.out.println("Максимальная посещаемость одним пользователем: " + statistics.getMaxVisitsByUser());
+        System.out.println("Список сайтов, со страниц которых есть ссылки: " + statistics.getRefererDomains());
     }
 
     public static void getBrowserAndOsStats(String path) throws IOException {

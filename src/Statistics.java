@@ -1,8 +1,10 @@
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Statistics {
     private long totalTraffic;
@@ -10,11 +12,13 @@ public class Statistics {
     private LocalDateTime maxTime;
     private int nonBotVisitsCnt = 0;
     private int responseErrorsCnt = 0;
-    private HashSet<String> sitePages = new HashSet<>();
-    private HashSet<String> nonexistentSitePages = new HashSet<>();
-    private HashMap<String, Integer> osCountMap = new HashMap<>();
-    private HashMap<String, Integer> browserCountMap = new HashMap<>();
-    private HashSet<String> uniqueNonBotVisitorIps = new HashSet<>();
+    private final HashSet<String> sitePages = new HashSet<>();
+    private final HashSet<String> nonexistentSitePages = new HashSet<>();
+    private final HashMap<String, Integer> osCountMap = new HashMap<>();
+    private final HashMap<String, Integer> browserCountMap = new HashMap<>();
+    private final HashMap<Integer, Integer> visitsPerEachSecondMap = new HashMap<>();
+    private final HashMap<String, Integer> uniqueNonBotVisitsMap = new HashMap<>();
+    private final HashSet<String> refererDomains = new HashSet<>();
 
     public Statistics() {
         this.totalTraffic = 0;
@@ -28,6 +32,10 @@ public class Statistics {
 
     public HashSet<String> getNonexistentSitePages() {
         return nonexistentSitePages;
+    }
+
+    public HashSet<String> getRefererDomains() {
+        return refererDomains;
     }
 
     public void addEntry(LogEntry logEntry) {
@@ -55,12 +63,13 @@ public class Statistics {
         } else {
             browserCountMap.put(browser, browserCountMap.get(browser) + 1);
         }
-        if (!logEntry.getAgent().isBot()) {
-            nonBotVisitsCnt++;
-            uniqueNonBotVisitorIps.add(logEntry.getIpAddr());
-        }
+        addIfNotBot(logEntry);
         if (logEntry.getResponseCode() / 100 == 4 || logEntry.getResponseCode() / 100 == 5) {
             responseErrorsCnt++;
+        }
+        String domain = getRefererDomain(logEntry);
+        if (!domain.isEmpty()) {
+            refererDomains.add(getRefererDomain(logEntry));
         }
     }
 
@@ -107,6 +116,56 @@ public class Statistics {
     }
 
     public int getAverageVisitsPerUser() {
-        return nonBotVisitsCnt / uniqueNonBotVisitorIps.size();
+        return nonBotVisitsCnt / uniqueNonBotVisitsMap.keySet().size();
+    }
+
+    public int getPeakVisitsPerSecond() {
+        return visitsPerEachSecondMap.values()
+                .stream()
+                .max(Comparator.naturalOrder())
+                .get();
+    }
+
+    public int getMaxVisitsByUser() {
+        return uniqueNonBotVisitsMap.values()
+                .stream()
+                .max(Comparator.naturalOrder())
+                .get();
+    }
+
+    private void addIfNotBot(LogEntry logEntry) {
+        if (!logEntry.getAgent().isBot()) {
+            nonBotVisitsCnt++;
+            int currentSecond = (int) logEntry.getTime().atZone(ZoneId.systemDefault()).toEpochSecond();
+            if (!visitsPerEachSecondMap.containsKey(currentSecond)) {
+                visitsPerEachSecondMap.put(currentSecond, 1);
+            } else {
+                visitsPerEachSecondMap.put(currentSecond, visitsPerEachSecondMap.get(currentSecond) + 1);
+            }
+            String ip = logEntry.getIpAddr();
+            if (!uniqueNonBotVisitsMap.containsKey(ip)) {
+                uniqueNonBotVisitsMap.put(ip, 1);
+            } else {
+                uniqueNonBotVisitsMap.put(ip, uniqueNonBotVisitsMap.get(ip) + 1);
+            }
+        }
+    }
+
+    private String getRefererDomain(LogEntry logEntry) {
+        String tmp = logEntry.getReferer();
+        String domain = "";
+        Matcher matchHttp = Pattern.compile("http(://|s://|%3A%2F%2F|s%3A%2F%2F)").matcher(tmp);
+        if (matchHttp.find()) {
+            tmp = tmp.substring(matchHttp.group(0).length());
+        }
+        Matcher matchWww = Pattern.compile("www.").matcher(tmp);
+        if (matchWww.find()) {
+            tmp = tmp.substring(matchWww.group(0).length());
+        }
+        Matcher matchDomain = Pattern.compile("^.*?\\..*?(?=[/\"%&?:=#])").matcher(tmp);
+        if (matchDomain.find()) {
+            domain = matchDomain.group(0);
+        }
+        return domain;
     }
 }
