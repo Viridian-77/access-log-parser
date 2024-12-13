@@ -8,10 +8,13 @@ public class Statistics {
     private long totalTraffic;
     private LocalDateTime minTime;
     private LocalDateTime maxTime;
+    private int nonBotVisitsCnt = 0;
+    private int responseErrorsCnt = 0;
     private HashSet<String> sitePages = new HashSet<>();
     private HashSet<String> nonexistentSitePages = new HashSet<>();
     private HashMap<String, Integer> osCountMap = new HashMap<>();
     private HashMap<String, Integer> browserCountMap = new HashMap<>();
+    private HashSet<String> uniqueNonBotVisitorIps = new HashSet<>();
 
     public Statistics() {
         this.totalTraffic = 0;
@@ -52,6 +55,13 @@ public class Statistics {
         } else {
             browserCountMap.put(browser, browserCountMap.get(browser) + 1);
         }
+        if (!logEntry.getAgent().isBot()) {
+            nonBotVisitsCnt++;
+            uniqueNonBotVisitorIps.add(logEntry.getIpAddr());
+        }
+        if (logEntry.getResponseCode() / 100 == 4 || logEntry.getResponseCode() / 100 == 5) {
+            responseErrorsCnt++;
+        }
     }
 
     public long getTrafficRate() {
@@ -84,5 +94,19 @@ public class Statistics {
             entry.setValue((double) browserCountMap.get(entry.getKey()) / allBrowserCount);
         }
         return browserStats;
+    }
+
+    public int getAverageVisitsPerHour() {
+        Duration duration = Duration.between(minTime, maxTime);
+        return (int) (nonBotVisitsCnt / duration.toHours());
+    }
+
+    public int getAverageErrorsPerHour() {
+        Duration duration = Duration.between(minTime, maxTime);
+        return (int) (responseErrorsCnt / duration.toHours());
+    }
+
+    public int getAverageVisitsPerUser() {
+        return nonBotVisitsCnt / uniqueNonBotVisitorIps.size();
     }
 }

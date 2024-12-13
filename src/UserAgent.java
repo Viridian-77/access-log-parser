@@ -9,16 +9,19 @@ public class UserAgent {
     public static final String EDGE_REGEX = "Chrome(?=/).*?Safari(?=/).*?(Edg|Edge)(?=/)";
     public static final String CHROME_REGEX = "\\(KHTML, like Gecko\\).*?Chrome(?=/).*?Safari(?=/)";
     public static final String OPERATING_SYSTEM_REGEX = "(Windows|Linux|Macintosh)";
+    public static final String IS_BOT_REGEX = "(?i)bot";
 
     private final String userAgentString;
     private final String browser;
     private final String operatingSystem;
+    private final boolean isBot;
     private String firstBrackets;
 
     UserAgent(String userAgentString) {
         this.userAgentString = userAgentString;
         browser = initBrowser();
         operatingSystem = initOperatingSystem();
+        isBot = initIsBot();
     }
 
     public String getUserAgentString() {
@@ -31,6 +34,10 @@ public class UserAgent {
 
     public String getOperatingSystem() {
         return operatingSystem;
+    }
+
+    public boolean isBot() {
+        return isBot;
     }
 
     private String initBrowser() {
@@ -67,6 +74,16 @@ public class UserAgent {
             tmpOperatingSystem = "Other";
         }
         return tmpOperatingSystem;
+    }
+
+    private boolean initIsBot() {
+        boolean tmpIsBot = true;
+        Pattern pattern = Pattern.compile(IS_BOT_REGEX);
+        Matcher matcher = pattern.matcher(userAgentString);
+        if (!matcher.find()) {
+            tmpIsBot = false;
+        }
+        return tmpIsBot;
     }
 
     private void setFirstBrackets() {

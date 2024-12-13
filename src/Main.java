@@ -40,8 +40,9 @@ public class Main {
         System.out.println("Траффика в час: " + statistics.getTrafficRate() + " байт");
         System.out.println("Доли ОС: " + statistics.getOsStats());
         System.out.println("Доли браузеров: " + statistics.getBrowserStats());
-        System.out.println("==========================================");
-        System.out.println("Несуществующие страницы :" + statistics.getNonexistentSitePages());
+        System.out.println("Среднее количество посещений сайта за час: " + statistics.getAverageVisitsPerHour());
+        System.out.println("Среднее количество ошибочных запросов в час: " + statistics.getAverageErrorsPerHour());
+        System.out.println("Средняя посещаемость одним пользователем: " + statistics.getAverageVisitsPerUser());
     }
 
     public static void getBrowserAndOsStats(String path) throws IOException {
