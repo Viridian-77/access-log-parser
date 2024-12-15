@@ -79,31 +79,27 @@ public class Statistics {
         return totalTraffic / hours;
     }
 
-    public HashMap<String, Double> getOsStats() {
-        HashMap<String, Double> osStats = new HashMap<>();
-        int allOsesCount = 0;
-        for (Map.Entry<String, Integer> entry : osCountMap.entrySet()) {
-            osStats.put(entry.getKey(), 0d);
-            allOsesCount += entry.getValue();
-        }
-        for (Map.Entry<String, Double> entry : osStats.entrySet()) {
-            entry.setValue((double) osCountMap.get(entry.getKey()) / allOsesCount);
-        }
-        return osStats;
+    public Map<String, Double> getOsStats() {
+        return calculateStats(osCountMap);
     }
 
-    public HashMap<String, Double> getBrowserStats() {
-        HashMap<String, Double> browserStats = new HashMap<>();
-        int allBrowserCount = 0;
-        for (Map.Entry<String, Integer> entry : browserCountMap.entrySet()) {
-            browserStats.put(entry.getKey(), 0d);
-            allBrowserCount += entry.getValue();
-        }
-        for (Map.Entry<String, Double> entry : browserStats.entrySet()) {
-            entry.setValue((double) browserCountMap.get(entry.getKey()) / allBrowserCount);
-        }
-        return browserStats;
+    public Map<String, Double> getBrowserStats() {
+        return calculateStats(browserCountMap);
     }
+
+    private Map<String, Double> calculateStats(Map<String, Integer> countMap) {
+        int count = countMap.values()
+                .stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+        return countMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        ent -> count == 0 ? 0d : (double) ent.getValue() / count
+                ));
+    }
+
 
     public int getAverageVisitsPerHour() {
         Duration duration = Duration.between(minTime, maxTime);
@@ -123,14 +119,14 @@ public class Statistics {
         return visitsPerEachSecondMap.values()
                 .stream()
                 .max(Comparator.naturalOrder())
-                .get();
+                .orElse(0);
     }
 
     public int getMaxVisitsByUser() {
         return uniqueNonBotVisitsMap.values()
                 .stream()
                 .max(Comparator.naturalOrder())
-                .get();
+                .orElse(0);
     }
 
     private void addIfNotBot(LogEntry logEntry) {
